@@ -5,7 +5,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 const PORT = '8189';
-const API_PORT = '8000';
+const API_PORT = '3011';
 const ENV_FILE = path.resolve(__dirname, '..', '.env');
 
 function detectLanIp() {

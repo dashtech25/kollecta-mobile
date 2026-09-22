@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   targetRingCenter: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

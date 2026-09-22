@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroArcCenter: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

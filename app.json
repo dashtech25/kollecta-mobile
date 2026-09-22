@@ -46,7 +46,9 @@
         {
           "locationWhenInUsePermission": "CREA Collections a besoin de votre position pour valider les opérations."
         }
-      ]
+      ],
+      "expo-sharing",
+      "expo-status-bar"
     ],
     "extra": {
       "router": {},

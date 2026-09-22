@@ -580,7 +580,7 @@ function openMap(lat: number, lng: number) {
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(20,18,17,0.55)',
   },
   sheet: {
