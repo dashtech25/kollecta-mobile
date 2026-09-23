@@ -86,7 +86,13 @@ export default function LoginScreen() {
     if (!ok) return;
     setLoading(true);
     try {
-      const pending = await requestLoginOtp(loginValue, password);
+      const result = await requestLoginOtp(loginValue, password);
+      if (!result.otpRequired) {
+        // OTP désactivé côté serveur — la session est déjà ouverte.
+        router.replace('/');
+        return;
+      }
+      const { pending } = result;
       router.push({
         pathname: '/(auth)/login-otp',
         params: {

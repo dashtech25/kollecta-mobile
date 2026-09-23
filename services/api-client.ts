@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from './secure-storage';
 import { API_URL } from '../constants/config';
 
 const apiClient = axios.create({

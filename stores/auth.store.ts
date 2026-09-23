@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../services/secure-storage';
 import apiClient, { setOnSessionLost } from '../services/api-client';
 import { User } from '../types/auth.types';
 
@@ -12,17 +12,29 @@ export interface PendingLogin {
   resendAvailableInSeconds: number;
 }
 
+/**
+ * The backend can skip the OTP step entirely (OTP_LOGIN_ENABLED=false —
+ * used while the project isn't ready to require a code on every login).
+ * The UI must branch on `otpRequired` instead of assuming a pending session
+ * always follows step 1, otherwise it pushes to the OTP screen with an
+ * empty pendingLoginId and step 2 fails validation.
+ */
+export type LoginResult =
+  | { otpRequired: true; pending: PendingLogin }
+  | { otpRequired: false };
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 
   /**
-   * Step 1: validate credentials and trigger an OTP. Returns the pending
-   * login bag the UI must hand back to `confirmLoginOtp`. The user is NOT
-   * marked authenticated at this step.
+   * Step 1: validate credentials. If the backend requires an OTP, returns
+   * the pending bag the UI must hand back to `confirmLoginOtp` — the user
+   * is NOT marked authenticated yet. If OTP is disabled, the session is
+   * finalized right here (same as `confirmLoginOtp` would do).
    */
-  requestLoginOtp: (login: string, password: string) => Promise<PendingLogin>;
+  requestLoginOtp: (login: string, password: string) => Promise<LoginResult>;
 
   /** Step 2: verify the OTP and finalize the session. */
   confirmLoginOtp: (pendingLoginId: string, otp: string) => Promise<void>;
@@ -41,7 +53,18 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   requestLoginOtp: async (login: string, password: string) => {
     const { data } = await apiClient.post('/auth/login', { login, password });
-    return (data.data || data) as PendingLogin;
+    const result = data.data || data;
+
+    if (result.otpRequired === false) {
+      // OTP_LOGIN_ENABLED=false server-side — tokens are already here,
+      // finalize the session the same way confirmLoginOtp would.
+      await SecureStore.setItemAsync('accessToken', result.accessToken);
+      await SecureStore.setItemAsync('refreshToken', result.refreshToken);
+      set({ user: result.user, isAuthenticated: true });
+      return { otpRequired: false as const };
+    }
+
+    return { otpRequired: true as const, pending: result as PendingLogin };
   },
 
   confirmLoginOtp: async (pendingLoginId: string, otp: string) => {
