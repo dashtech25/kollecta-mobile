@@ -6,7 +6,10 @@ const { spawn } = require('child_process');
 
 const PORT = '8189';
 const API_PORT = '3011';
-const ENV_FILE = path.resolve(__dirname, '..', '.env');
+// .env.local, jamais .env : Expo charge .env.local en priorité sur .env
+// (et il est gitignored par défaut), donc l'IP locale ne touche jamais la
+// config versionnée.
+const ENV_FILE = path.resolve(__dirname, '..', '.env.local');
 
 function detectLanIp() {
   const interfaces = os.networkInterfaces();
