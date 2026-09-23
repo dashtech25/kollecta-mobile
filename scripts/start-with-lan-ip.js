@@ -10,13 +10,14 @@ const ENV_FILE = path.resolve(__dirname, '..', '.env');
 
 function detectLanIp() {
   const interfaces = os.networkInterfaces();
-  const priority = ['en0', 'en1', 'en2', 'en3', 'eth0', 'wlan0'];
+  const priority = ['en0', 'en1', 'en2', 'en3', 'eth0', 'wlan0', 'wi-fi', 'ethernet'];
+  const virtualPattern = /vethernet|virtualbox|vmware|hyper-v|docker|wsl|loopback/i;
   const candidates = [];
 
   for (const name of Object.keys(interfaces)) {
     for (const addr of interfaces[name] || []) {
       if (addr.family === 'IPv4' && !addr.internal) {
-        candidates.push({ name, address: addr.address });
+        candidates.push({ name, address: addr.address, virtual: virtualPattern.test(name) });
       }
     }
   }
@@ -24,8 +25,9 @@ function detectLanIp() {
   if (candidates.length === 0) return null;
 
   candidates.sort((a, b) => {
-    const ai = priority.indexOf(a.name);
-    const bi = priority.indexOf(b.name);
+    if (a.virtual !== b.virtual) return a.virtual ? 1 : -1;
+    const ai = priority.indexOf(a.name.toLowerCase());
+    const bi = priority.indexOf(b.name.toLowerCase());
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
   });
 
@@ -65,6 +67,7 @@ const child = spawn(
   ['expo', 'start', '--port', PORT, '--offline', ...extraArgs],
   {
     stdio: 'inherit',
+    shell: true,
     env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: iface.address },
   }
 );
