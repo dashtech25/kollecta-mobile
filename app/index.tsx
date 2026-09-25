@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { router } from 'expo-router';
 import { useAuthStore } from '../stores/auth.store';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { getTenantDomain } from '../services/tenant';
 
 export default function Index() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
@@ -10,7 +11,12 @@ export default function Index() {
     if (isLoading) return;
 
     if (!isAuthenticated) {
-      router.replace('/(auth)/login');
+      // Un utilisateur non authentifié doit d'abord avoir choisi son
+      // organisation (une seule app sert toutes les organisations) avant de
+      // pouvoir se connecter.
+      getTenantDomain().then((domain) => {
+        router.replace(domain ? '/(auth)/login' : '/(auth)/select-organization');
+      });
       return;
     }
 
