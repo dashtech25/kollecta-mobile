@@ -403,7 +403,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.copyright}>
-              © {new Date().getFullYear()} Credit Africa Invest
+              © {new Date().getFullYear()} {branding?.name || 'Crea Invest'}
             </Text>
           </View>
         </ScrollView>
