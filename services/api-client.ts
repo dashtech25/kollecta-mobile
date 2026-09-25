@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from './secure-storage';
+import { getTenantDomain } from './tenant';
 import { API_URL } from '../constants/config';
 
 const apiClient = axios.create({
@@ -154,6 +155,10 @@ apiClient.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const tenantDomain = await getTenantDomain();
+  if (tenantDomain) {
+    config.headers['X-Tenant-Domain'] = tenantDomain;
+  }
   // Stash a timer for the response interceptor to pick up
   (config as InternalAxiosRequestConfig & { _meta?: RequestMeta })._meta = {
     startedAt: Date.now(),
@@ -181,9 +186,12 @@ apiClient.interceptors.response.use(
         const refreshToken = await SecureStore.getItemAsync('refreshToken');
         if (!refreshToken) throw new Error('No refresh token');
 
-        const { data } = await axios.post(`${API_URL}/auth/refresh`, {
-          refreshToken,
-        });
+        const tenantDomain = await getTenantDomain();
+        const { data } = await axios.post(
+          `${API_URL}/auth/refresh`,
+          { refreshToken },
+          { headers: tenantDomain ? { 'X-Tenant-Domain': tenantDomain } : {} },
+        );
 
         const newAccessToken = data.data?.accessToken || data.accessToken;
         const newRefreshToken = data.data?.refreshToken || data.refreshToken;

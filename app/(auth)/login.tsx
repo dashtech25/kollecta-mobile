@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { COLORS, SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { useAuthStore } from '../../stores/auth.store';
 import { CountryPicker } from '../../components/ui/CountryPicker';
 import { Country, DEFAULT_COUNTRY } from '../../constants/countries';
+import { clearTenantDomain, getTenantBranding, TenantBranding } from '../../services/tenant';
 
 type LoginMode = 'email' | 'phone';
 
@@ -33,8 +34,18 @@ export default function LoginScreen() {
   const [identifierError, setIdentifierError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [branding, setBranding] = useState<TenantBranding | null>(null);
+
+  useEffect(() => {
+    getTenantBranding().then(setBranding);
+  }, []);
 
   const requestLoginOtp = useAuthStore((s) => s.requestLoginOtp);
+
+  const handleChangeOrganization = async () => {
+    await clearTenantDomain();
+    router.replace('/(auth)/select-organization');
+  };
 
   const switchMode = (next: LoginMode) => {
     setMode(next);
@@ -135,14 +146,27 @@ export default function LoginScreen() {
           <View style={styles.hero}>
             <View style={styles.logoRing}>
               <Image
-                source={require('../../assets/crea-invest-logo.png')}
+                source={
+                  branding?.logoUrl
+                    ? { uri: branding.logoUrl }
+                    : require('../../assets/crea-invest-logo.png')
+                }
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-            <Text style={styles.brandLabel}>CREA INVEST</Text>
+            <Text style={styles.brandLabel}>
+              {(branding?.name || 'CREA INVEST').toUpperCase()}
+            </Text>
             <Text style={styles.appName}>Collections</Text>
             <Text style={styles.heroTagline}>Votre espace de collecte sécurisé</Text>
+            <TouchableOpacity
+              onPress={handleChangeOrganization}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              style={styles.changeOrgBtn}
+            >
+              <Text style={styles.changeOrgText}>Changer d'organisation</Text>
+            </TouchableOpacity>
           </View>
 
           {/* ── Form card ── */}
@@ -434,6 +458,13 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.65)',
     fontSize: 13,
     marginTop: 6,
+  },
+  changeOrgBtn: { marginTop: 14 },
+  changeOrgText: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 
   // Card
